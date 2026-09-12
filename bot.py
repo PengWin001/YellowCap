@@ -1,16 +1,34 @@
 import os
+import asyncio
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+from aiohtttp import web
 
 load_dotenv()
 
 TOKEN = os.getenv("DISCORD_TOKEN")
+if not TOKEN:
+    raise RuntimeERROR("DISCORD_TOKEN is missing")
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 bot.remove_command("help")
+
+async def health_check(request):
+    return web.response(text="YellowCap is Alive!")
+
+app = Web.Application()
+app.router.add_get("/", health_check)
+
+async def start_web_server():
+    port = int(os.getenv("PORT", 10000))
+    runner = web.Apprunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    print(f"Web server running on port {port}")
 
 COGS = [
     "cogs.moderation",
@@ -53,8 +71,10 @@ async def setup():
         await bot.load_extension(cog)
         print(f"Loaded {cog}")
 
+async def main():
+    await setup()
+    await start_web_server()
+    await bot.start(TOKEN)
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(setup())
-    bot.run(TOKEN)
+    asyncio.run(main())
